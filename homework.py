@@ -70,7 +70,7 @@ def get_api_answer(timestamp):
                 f'Код ответа API: {response.status_code}'
             )
         return response.json()
-    except Exception as error:
+    except requests.RequestException as error:
         logger.error(f'Ошибка при запросе к API: {error}')
         raise
 
@@ -79,18 +79,22 @@ def check_response(response):
     """Проверяет ответ API на соответствие документации."""
     if not isinstance(response, dict):
         logger.error('Ответ API не является словарём')
-        raise InvalidResponseError('Ответ API не является словарём')
+        raise TypeError('Ответ API не является словарём')
     if 'homeworks' not in response:
         logger.error('В ответе API нет ключа homeworks')
         raise InvalidResponseError('В ответе API нет ключа homeworks')
     if not isinstance(response['homeworks'], list):
         logger.error('homeworks не является списком')
-        raise InvalidResponseError('homeworks не является списком')
+        raise TypeError('homeworks не является списком')
     return response['homeworks']
 
 
 def parse_status(homework):
     """Извлекает статус домашней работы и возвращает строку для Telegram."""
+    if 'homework_name' not in homework:
+        raise InvalidResponseError(
+            'В ответе API домашки нет ключа homework_name'
+        )
     homework_name = homework['homework_name']
     status = homework['status']
     if status not in HOMEWORK_VERDICTS:
